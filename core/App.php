@@ -45,20 +45,60 @@ class App {
         }
     }
 
+    private function loadEnv() {
+        $envPath = dirname(__DIR__) . '/.env';
+        if (file_exists($envPath)) {
+            $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line) || strpos($line, '#') === 0) continue;
+                if (strpos($line, '=') === false) continue;
+                list($name, $value) = explode('=', $line, 2);
+                $name = trim($name);
+                $value = trim($value);
+                // Strip quotes
+                if (preg_match('/^"(.*)"$/', $value, $matches)) {
+                    $value = $matches[1];
+                } elseif (preg_match('/^\'(.*)\'$/', $value, $matches)) {
+                    $value = $matches[1];
+                }
+                $_ENV[$name] = $value;
+                $_SERVER[$name] = $value;
+                putenv("{$name}={$value}");
+            }
+        }
+    }
+
+    private function env($key, $default = null) {
+        $val = getenv($key);
+        if ($val === false) {
+            $val = $_ENV[$key] ?? $_SERVER[$key] ?? null;
+        }
+        if ($val === null) {
+            return $default;
+        }
+        if (strtolower($val) === 'true') return true;
+        if (strtolower($val) === 'false') return false;
+        if (strtolower($val) === 'null') return null;
+        return $val;
+    }
+
     private function loadDefaultConfig() {
+        $this->loadEnv();
+        
         $this->config = [
             'db' => [
-                'host' => 'localhost',
-                'name' => 'kutuphane',
-                'user' => 'root',
-                'pass' => '',
-                'charset' => 'utf8mb4'
+                'host' => $this->env('DB_HOST', 'localhost'),
+                'name' => $this->env('DB_DATABASE', 'kutuphane'),
+                'user' => $this->env('DB_USERNAME', 'root'),
+                'pass' => $this->env('DB_PASSWORD', ''),
+                'charset' => $this->env('DB_CHARSET', 'utf8mb4')
             ],
             'app' => [
-                'name' => 'CodeForge App',
-                'env' => 'development', // development, production
-                'debug' => true,
-                'url' => 'http://localhost/kutuphane'
+                'name' => $this->env('APP_NAME', 'CodeForge App'),
+                'env' => $this->env('APP_ENV', 'development'), // development, production
+                'debug' => (bool)$this->env('APP_DEBUG', true),
+                'url' => $this->env('APP_URL', 'http://localhost/kutuphane')
             ]
         ];
     }

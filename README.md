@@ -29,37 +29,37 @@ Veritabanı kullanan, kullanıcı üyelik sistemi (Auth), veri tabanı sorgu mot
 
 ---
 
-## 📦 Kurulum Seçenekleri (Bootstrap & Composer Kolaylığında)
+## 📦 Kurulum Seçenekleri (Tek Komutla Kurulum & CDN)
 
 CodeForge-Engine'i projenize dahil etmek çok kolaydır. İhtiyacınıza göre aşağıdaki yöntemlerden birini seçebilirsiniz:
 
-### 1. CDN Desteği (Hiçbir Şey İndirmeden Kullanın!)
-Tıpkı Bootstrap gibi, projenize hiçbir dosya indirmeden doğrudan GitHub üzerinden servis edilen CDN linklerini kullanarak HTML sayfalarınızı tasarlayabilirsiniz. Kodunuza şu iki satırı eklemeniz yeterlidir:
+### 1. Tek Komutla CLI Kurulumu (Önerilen 🚀)
+Boş bir proje klasörü oluşturun, içine girin ve terminalinizde (PowerShell, CMD veya Bash) aşağıdaki tek satırlık PHP komutunu çalıştırın:
+
+```bash
+php -r "eval(file_get_contents('https://raw.githubusercontent.com/RecepKandemir22/kutuphane/main/installer.php'));"
+```
+
+Bu komut:
+* Gerekli PHP sürüm ve eklentilerini kontrol eder.
+* Framework dosyalarını otomatik olarak klasörünüze indirir.
+* Veritabanı ve uygulama ayarlarını terminalden interaktif olarak alıp `.env` dosyanızı oluşturur.
+
+### 2. CDN Desteği (Arayüz Tasarımı İçin)
+Projenize hiçbir dosya indirmeden, doğrudan CDN linklerini kullanarak HTML sayfalarınızı tasarlayabilirsiniz:
 
 ```html
 <!-- CodeForge CSS (Head kısmına) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/kullanici-adi/codeforge-engine@main/public/assets/css/forge-ui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/RecepKandemir22/kutuphane@main/public/assets/css/forge-ui.css">
 
 <!-- CodeForge JS (Body sonuna) -->
-<script src="https://cdn.jsdelivr.net/gh/kullanici-adi/codeforge-engine@main/public/assets/js/forge-core.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/RecepKandemir22/kutuphane@main/public/assets/js/forge-core.js"></script>
 ```
 
-### 2. Terminalden Tek Satırla İndirme (Download Scripts)
-Terminalinizde (PowerShell, Command Prompt veya Bash) tek bir satır çalıştırarak kütüphaneyi anında indirebilirsiniz:
-
-* **Sadece Arayüz Dosyalarını (CSS & JS) İndirmek İçin:**
-  ```bash
-  # PowerShell (Windows)
-  curl -o forge-ui.css "https://raw.githubusercontent.com/kullanici-adi/codeforge-engine/main/public/assets/css/forge-ui.css"; curl -o forge-core.js "https://raw.githubusercontent.com/kullanici-adi/codeforge-engine/main/public/assets/js/forge-core.js"
-  
-  # Bash (Linux/macOS)
-  curl -o forge-ui.css https://raw.githubusercontent.com/kullanici-adi/codeforge-engine/main/public/assets/css/forge-ui.css && curl -o forge-core.js https://raw.githubusercontent.com/kullanici-adi/codeforge-engine/main/public/assets/js/forge-core.js
-  ```
-
-* **Full-Stack Framework Sürümünü Klonlamak İçin:**
-  ```bash
-  git clone https://github.com/kullanici-adi/codeforge-engine.git proje-adi
-  ```
+### 3. Git Klonlama İle Kurulum
+```bash
+git clone https://github.com/RecepKandemir22/kutuphane.git proje-adi
+```
 
 ---
 
@@ -107,8 +107,8 @@ $router->get('/hakkimizda', function() {
 ---
 
 ### 🔥 Mod 3 (Full-Stack / ORM & Veritabanı) Başlangıç
-1. Boş bir MySQL veritabanı oluşturun (Örn: `kutuphane`).
-2. [core/App.php](file:///c:/xampp/htdocs/kutuphane/core/App.php) dosyasından veritabanı kullanıcı adı ve şifrenizi girin.
+1. Boş bir MySQL veritabanı oluşturun.
+2. Proje ana dizinindeki `.env` dosyasını düzenleyerek veritabanı bağlantı bilgilerinizi girin (`DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`).
 3. Terminalde proje ana dizinine gidip tabloları otomatik oluşturun:
 ```bash
 # Windows XAMPP kullanıyorsanız:
