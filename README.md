@@ -92,6 +92,41 @@ ForgeShield::responseJSON('success', 'Mesajınız başarıyla ve güvenle iletil
 
 ---
 
+## 📧 Gerçek E-Posta (SMTP) Gönderim Ayarları
+
+Formunuzdan gönderilen e-postaların alıcı adresine gerçekten ulaşması için kök dizinde otomatik olarak oluşturulan `config.php` dosyasını düzenlemeniz gerekmektedir.
+
+### Hızlı Yapılandırma Adımları
+
+1. Projenizin ana dizinindeki `config.php` dosyasını bir kod editörüyle açın.
+2. `SMTP_DEVELOPER_MODE` sabitini `false` olarak güncelleyin. (Bu değer `true` iken gönderim simüle edilir ve e-postalar gerçekten gönderilmez):
+   ```php
+   define('SMTP_DEVELOPER_MODE', false);
+   ```
+3. SMTP ayarlarını kendi e-posta hesabınıza veya e-posta servis sağlayıcınıza (Gmail, Outlook, Yandex, Mailtrap vb.) göre doldurun:
+
+| Sabit Adı | Açıklama | Örnek Değer (Gmail) |
+|---|---|---|
+| `SMTP_HOST` | SMTP Sunucu Adresi | `'smtp.gmail.com'` |
+| `SMTP_PORT` | SMTP Portu (TLS için 587, SSL için 465) | `587` |
+| `SMTP_SECURE` | Güvenlik Protokolü (`tls` veya `ssl`) | `'tls'` |
+| `SMTP_USER` | E-posta Kullanıcı Adınız | `'ornek@gmail.com'` |
+| `SMTP_PASS` | E-posta Şifreniz (Aşağıdaki nota bakın) | `'abcd efgh ijkl mnop'` |
+| `SMTP_FROM_EMAIL`| Gönderici E-posta Adresi | `'ornek@gmail.com'` |
+| `SMTP_FROM_NAME` | E-postada görünecek gönderici adı | `'İletişim Formu'` |
+| `SMTP_TO_EMAIL`  | Formun iletileceği yetkili e-posta adresi | `'hedef-yetkili@gmail.com'` |
+
+> [!WARNING]
+> **Gmail Kullanıcıları İçin Önemli Güvenlik Notu:**
+> Gmail, güvenlik nedeniyle kişisel hesabınızın normal şifresi ile doğrudan SMTP bağlantısına izin vermez. Gmail kullanıyorsanız:
+> 1. Google Hesabınızda **2 Adımlı Doğrulama**yı açın.
+> 2. Arama kutusuna **Uygulama Şifreleri (App Passwords)** yazarak ilgili sayfaya gidin.
+> 3. Yeni bir uygulama şifresi üretin (örn. "Web Form" adı vererek).
+> 4. Google'ın ürettiği **16 haneli özel şifreyi** kopyalayarak `config.php` içindeki `SMTP_PASS` değerine yazın.
+
+---
+
+
 ## 🛡️ Güvenlik ve Koruma Özellikleri
 
 ### 1. Çift Tıklama Koruması (Anti Double-Submit)

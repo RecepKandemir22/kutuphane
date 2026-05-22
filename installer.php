@@ -360,6 +360,22 @@ ForgeShield::responseJSON('success', 'Mesajınız başarıyla ve güvenle gönde
 ?>
 
 --------------------------------------------------------------------------------
+4. ADIM: GERÇEK E-POSTA (SMTP) AYARLARI
+--------------------------------------------------------------------------------
+Formlardan gönderilen mesajların gerçekte e-postanıza ulaşması için projenizin 
+kök dizininde otomatik olarak oluşturulan "config.php" dosyasını yapılandırın.
+
+1. "config.php" dosyasını açın.
+2. "SMTP_DEVELOPER_MODE" ayarını "false" yapın:
+   define('SMTP_DEVELOPER_MODE', false);
+3. Kendi e-posta servis sağlayıcınıza (Gmail, Yandex, Mailtrap vb.) göre bilgileri girin:
+   - SMTP_HOST: SMTP sunucunuz (Örn: smtp.gmail.com)
+   - SMTP_PORT: SMTP portu (TLS için 587, SSL için 465)
+   - SMTP_USER: SMTP e-posta kullanıcı adınız
+   - SMTP_PASS: E-posta şifreniz (Gmail için normal şifre yerine Google hesabınızdan alacağınız 16 haneli "Uygulama Şifresi" olmalıdır)
+   - SMTP_TO_EMAIL: Mesajların gönderileceği alıcı e-posta adresi.
+
+--------------------------------------------------------------------------------
 🛡️ Hangi Korumalar Sağlanıyor?
 --------------------------------------------------------------------------------
 1. CSRF Koruması: Dış sitelerden gelen sahte form gönderimlerini engeller.
@@ -378,16 +394,97 @@ if (file_put_contents($guidePath, $guideContent) !== false) {
     logConsole('warning', "Entegrasyon kılavuzu dosyası (FORGE_SHIELD_GUIDE.txt) oluşturulamadı.");
 }
 
+// 3. Create default config.php file if it doesn't exist
+$configPath = $currentDir . DIRECTORY_SEPARATOR . 'config.php';
+if (!file_exists($configPath)) {
+    $configContent = <<<PHP
+<?php
+/**
+ * ForgeForm & Shield - SMTP Yapılandırma Dosyası
+ * 
+ * Bu dosyadaki ayarları kendi e-posta sunucunuza göre düzenleyerek
+ * gerçek e-posta gönderimini aktif edebilirsiniz.
+ */
+
+// Geliştirici Modu (Test Modu)
+// TRUE ise: E-posta gönderimi simüle edilir, gerçek e-posta gönderilmez fakat başarı sayfası görüntülenir.
+// FALSE ise: Gerçek SMTP bilgileri kullanılarak e-posta gönderilir.
+define('SMTP_DEVELOPER_MODE', true);
+
+// SMTP Sunucu Ayarları
+define('SMTP_HOST', 'smtp.gmail.com');             // Örn: smtp.gmail.com veya mail.siteniz.com
+define('SMTP_PORT', 587);                          // Genellikle TLS için 587, SSL için 465
+define('SMTP_SECURE', 'tls');                      // 'tls' veya 'ssl' (küçük harfle)
+define('SMTP_AUTH', true);                         // SMTP Kimlik doğrulaması (Genellikle true)
+
+// SMTP Giriş Bilgileri
+define('SMTP_USER', 'sizin-epostaniz@gmail.com');    // E-posta adresiniz
+define('SMTP_PASS', 'uygulama-sifreniz');          // E-posta şifreniz (Gmail için 16 haneli Uygulama Şifresi)
+
+// E-posta Başlık Bilgileri
+define('SMTP_FROM_EMAIL', 'sizin-epostaniz@gmail.com'); // Gönderen e-posta (Genellikle SMTP_USER ile aynı olmalıdır)
+define('SMTP_FROM_NAME', 'ForgeForm İletişim');     // Gönderici adı
+
+// Formun İletileceği Alıcı E-posta Adresi
+define('SMTP_TO_EMAIL', 'hedef-eposta@gmail.com');   // Form mesajlarının gönderileceği yetkili e-posta adresi
+PHP;
+    if (file_put_contents($configPath, $configContent) !== false) {
+        logConsole('success', "Varsayılan SMTP yapılandırma dosyası oluşturuldu: config.php");
+    }
+}
+
 echo PHP_EOL;
 echo COLOR_BOLD . COLOR_INFO . "--------------------------------------------------------------------\n";
 echo "🔄 Otomatik Entegrasyon Sihirbazı (Auto-Integration Wizard)\n";
 echo "--------------------------------------------------------------------\n" . COLOR_RESET;
-$auto = prompt("Mevcut dosyalarınıza entegrasyon kodlarını otomatik enjekte etmek ister misiniz? (y/n)", "n");
+$auto = prompt("Mevcut dosyalarınıza entegrasyon kodlarını otomatik enjekte etmek ister misiniz? (y/n)", "y");
 if (strtolower($auto) === 'y' || strtolower($auto) === 'yes') {
-    $formFile = prompt("Formun bulunduğu HTML/PHP dosyası (örn. index.php veya boş geçin)", "index.php");
-    $postFile = prompt("Form verilerini alan PHP dosyası (örn. post.php veya boş geçin)", "");
-    injectCodeIntoFiles($formFile, $postFile);
-    echo PHP_EOL;
+    logConsole('info', "Dizindeki dosyalar form etiketi için taranıyor...");
+    
+    // Scan current directory for php and html files
+    $detectedForms = [];
+    $allFiles = glob("*.{php,html}", GLOB_BRACE);
+    if (!empty($allFiles)) {
+        foreach ($allFiles as $file) {
+            $fileName = basename($file);
+            // Skip installer, config and directory paths
+            if ($fileName === 'installer.php' || $fileName === 'config.php' || strpos($file, 'forge-shield') !== false || strpos($file, 'vendor') !== false) {
+                continue;
+            }
+            $content = file_get_contents($file);
+            if (strpos($content, '<form') !== false) {
+                $detectedForms[] = $file;
+            }
+        }
+    }
+    
+    if (!empty($detectedForms)) {
+        logConsole('success', "Algılanan Form Dosyaları: " . implode(', ', $detectedForms));
+        foreach ($detectedForms as $formFile) {
+            $content = file_get_contents($formFile);
+            $postFile = '';
+            
+            // Extract the action attribute of the form
+            if (preg_match('/<form[^>]*?action=["\']([^"\']*?)["\']/i', $content, $actionMatches)) {
+                $actionValue = $actionMatches[1];
+                // Clean anchors or query params
+                $actionValueClean = explode('?', $actionValue)[0];
+                $actionValueClean = explode('#', $actionValueClean)[0];
+                $actionValueClean = trim($actionValueClean);
+                
+                $actionPath = $currentDir . DIRECTORY_SEPARATOR . $actionValueClean;
+                if (!empty($actionValueClean) && file_exists($actionPath)) {
+                    $postFile = $actionValueClean;
+                }
+            }
+            
+            logConsole('info', "'{$formFile}'" . ($postFile ? " ve işlem dosyası '{$postFile}'" : "") . " için entegrasyon başlatılıyor...");
+            injectCodeIntoFiles($formFile, $postFile);
+        }
+        echo PHP_EOL;
+    } else {
+        logConsole('warning', "Dizinde otomatik entegrasyon yapılabilecek form içeren bir HTML/PHP dosyası bulunamadı.");
+    }
 }
 
 echo PHP_EOL;
@@ -395,14 +492,11 @@ echo COLOR_BOLD . COLOR_SUCCESS . "=============================================
 echo "🎉 Kurulum Tamamlandı! ({$successCount} dosya kuruldu/güncellendi) 🎉\n";
 echo "====================================================================\n" . COLOR_RESET;
 echo "Sistemi kullanmaya başlamak için şu adımları izleyin:\n\n";
-echo "  1. Formunuza " . COLOR_BOLD . "class=\"forge-form\"" . COLOR_RESET . " ekleyin.\n";
-echo "  2. Sayfanızın başına " . COLOR_BOLD . "require_once 'forge-shield/ForgeShield.php';" . COLOR_RESET . " ekleyin.\n";
-echo "  3. HTML sayfanızın head etiketlerine stil ve script dosyalarını bağlayın:\n";
-echo "     " . COLOR_BOLD . "<link rel=\"stylesheet\" href=\"forge-shield/forge-form.css\">\n";
-echo "     <script src=\"forge-shield/forge-form.js\" defer></script>" . COLOR_RESET . "\n";
-echo "  4. Form post verilerini işleyen dosyanızın en başında şu kontrolü yapın:\n";
-echo "     " . COLOR_BOLD . "\$cleanData = ForgeShield::validate();" . COLOR_RESET . "\n\n";
+echo "  1. Formunuza otomatik olarak " . COLOR_BOLD . "class=\"forge-form\"" . COLOR_RESET . " eklenmiştir.\n";
+echo "  2. Sayfanıza otomatik olarak CSS ve script dosyaları bağlanmıştır.\n";
+echo "  3. Gerçek mail gönderimi için " . COLOR_BOLD . "config.php" . COLOR_RESET . " dosyasını düzenleyin.\n\n";
 echo "💡 Kurulum detayları ve entegrasyon kodları " . COLOR_BOLD . "FORGE_SHIELD_GUIDE.txt" . COLOR_RESET . " dosyasına kaydedildi.\n";
-echo "💡 Dilediğiniz zaman şu terminal komutuyla da entegrasyon yapabilirsiniz:\n";
+echo "💡 Dilediğiniz zaman şu terminal komutuyla da manuel entegrasyon yapabilirsiniz:\n";
 echo "   " . COLOR_BOLD . "php installer.php integrate [form_dosyasi.php] [post_dosyasi.php]" . COLOR_RESET . "\n\n";
 echo "Gelişmiş Ajax Form ve Güvenlik kütüphanesini kullandığınız için teşekkürler! ⚡\n";
+
