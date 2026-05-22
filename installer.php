@@ -362,18 +362,19 @@ ForgeShield::responseJSON('success', 'Mesajınız başarıyla ve güvenle gönde
 --------------------------------------------------------------------------------
 4. ADIM: GERÇEK E-POSTA (SMTP) AYARLARI
 --------------------------------------------------------------------------------
-Formlardan gönderilen mesajların gerçekte e-postanıza ulaşması için projenizin 
+Formlardan gönderilen mesajların gerçekten e-postanıza ulaşması için projenizin 
 kök dizininde otomatik olarak oluşturulan "config.php" dosyasını yapılandırın.
 
+Gmail SMTP için gerekli sunucu, port, protokol vb. tüm teknik ayarlar 
+otomatik olarak tanımlanmıştır ve değiştirmenize gerek yoktur.
+
 1. "config.php" dosyasını açın.
-2. "SMTP_DEVELOPER_MODE" ayarını "false" yapın:
+2. Gerçek gönderimi aktif etmek için "SMTP_DEVELOPER_MODE" ayarını "false" yapın:
    define('SMTP_DEVELOPER_MODE', false);
-3. Kendi e-posta servis sağlayıcınıza (Gmail, Yandex, Mailtrap vb.) göre bilgileri girin:
-   - SMTP_HOST: SMTP sunucunuz (Örn: smtp.gmail.com)
-   - SMTP_PORT: SMTP portu (TLS için 587, SSL için 465)
-   - SMTP_USER: SMTP e-posta kullanıcı adınız
-   - SMTP_PASS: E-posta şifreniz (Gmail için normal şifre yerine Google hesabınızdan alacağınız 16 haneli "Uygulama Şifresi" olmalıdır)
-   - SMTP_TO_EMAIL: Mesajların gönderileceği alıcı e-posta adresi.
+3. Üst kısımdaki SADECE 3 ALANI doldurun:
+   - SMTP_USER: Gönderen Gmail adresiniz (Oturum açacak hesap)
+   - SMTP_PASS: Google hesabınızdan alacağınız 16 haneli "Uygulama Şifresi"
+   - SMTP_TO_EMAIL: Mesajların gönderileceği alıcı (hedef) e-posta adresi.
 
 --------------------------------------------------------------------------------
 🛡️ Hangi Korumalar Sağlanıyor?
@@ -400,34 +401,47 @@ if (!file_exists($configPath)) {
     $configContent = <<<PHP
 <?php
 /**
- * ForgeForm & Shield - SMTP Yapılandırma Dosyası
+ * ForgeForm & Shield - SMTP Yapılandırma Dosyası (Gmail Uyumlu)
  * 
- * Bu dosyadaki ayarları kendi e-posta sunucunuza göre düzenleyerek
- * gerçek e-posta gönderimini aktif edebilirsiniz.
+ * E-postaların gerçekten gönderilebilmesi için aşağıdaki 3 bilgiyi doldurmanız yeterlidir.
+ * Gmail SMTP ayarları (Sunucu, Port, Güvenlik) otomatik olarak tanımlanmıştır.
  */
 
 // Geliştirici Modu (Test Modu)
-// TRUE ise: E-posta gönderimi simüle edilir, gerçek e-posta gönderilmez fakat başarı sayfası görüntülenir.
-// FALSE ise: Gerçek SMTP bilgileri kullanılarak e-posta gönderilir.
+// TRUE iken: E-posta gönderimi simüle edilir (tasarım testi için).
+// FALSE iken: Gerçek e-posta gönderimi aktif olur.
 define('SMTP_DEVELOPER_MODE', true);
 
-// SMTP Sunucu Ayarları
-define('SMTP_HOST', 'smtp.gmail.com');             // Örn: smtp.gmail.com veya mail.siteniz.com
-define('SMTP_PORT', 587);                          // Genellikle TLS için 587, SSL için 465
-define('SMTP_SECURE', 'tls');                      // 'tls' veya 'ssl' (küçük harfle)
-define('SMTP_AUTH', true);                         // SMTP Kimlik doğrulaması (Genellikle true)
+// =========================================================================
+// ✍️ DOLDURMANIZ GEREKEN ALANLAR (Sadece bu 3 alanı düzenleyin)
+// =========================================================================
 
-// SMTP Giriş Bilgileri
-define('SMTP_USER', 'sizin-epostaniz@gmail.com');    // E-posta adresiniz
-define('SMTP_PASS', 'uygulama-sifreniz');          // E-posta şifreniz (Gmail için 16 haneli Uygulama Şifresi)
+// 1. Gmail Adresiniz (Mail göndermek için kullanılacak hesap)
+define('SMTP_USER', 'sizin-epostaniz@gmail.com');
 
-// E-posta Başlık Bilgileri
-define('SMTP_FROM_EMAIL', 'sizin-epostaniz@gmail.com'); // Gönderen e-posta (Genellikle SMTP_USER ile aynı olmalıdır)
-define('SMTP_FROM_NAME', 'ForgeForm İletişim');     // Gönderici adı
+// 2. Gmail Uygulama Şifreniz (16 Haneli Şifre)
+// Google Hesabınız > Güvenlik > Uygulama Şifreleri bölümünden oluşturulan 16 haneli şifredir.
+// Örn: 'abcd efgh ijkl mnop'
+define('SMTP_PASS', 'xxxx xxxx xxxx xxxx');
 
-// Formun İletileceği Alıcı E-posta Adresi
-define('SMTP_TO_EMAIL', 'hedef-eposta@gmail.com');   // Form mesajlarının gönderileceği yetkili e-posta adresi
+// 3. Mesajların İletileceği Alıcı E-posta Adresi
+// İletişim formundan gönderilen mesajların ulaşmasını istediğiniz yetkili e-posta adresi.
+define('SMTP_TO_EMAIL', 'hedef-eposta@gmail.com');
+
+
+// =========================================================================
+// ⚙️ GMAIL SMTP SABİT AYARLARI (Bu bölüme dokunmanıza gerek yoktur)
+// =========================================================================
+define('SMTP_HOST', 'smtp.gmail.com');
+define('SMTP_PORT', 587);
+define('SMTP_SECURE', 'tls');
+define('SMTP_AUTH', true);
+
+// Gönderici Başlık Bilgileri
+define('SMTP_FROM_EMAIL', SMTP_USER); // Gönderen e-posta (Oturum açan hesap ile aynı olmalıdır)
+define('SMTP_FROM_NAME', 'ForgeForm İletişim');
 PHP;
+
     if (file_put_contents($configPath, $configContent) !== false) {
         logConsole('success', "Varsayılan SMTP yapılandırma dosyası oluşturuldu: config.php");
     }

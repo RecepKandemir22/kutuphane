@@ -6,7 +6,7 @@ Kurulumu tamamen eklemeli (additive) olup, sitenizdeki mevcut hiçbir dosyayı b
 
 ---
 
-## 🚀 Hızlı Kurulum (Tek Komut)
+## 🚀 Hızlı & Otomatik Kurulum (Sihirbaz)
 
 Terminalinizi açıp projenizin kök dizinine giderek aşağıdaki tek satırlık PHP komutunu çalıştırmanız yeterlidir:
 
@@ -14,12 +14,16 @@ Terminalinizi açıp projenizin kök dizinine giderek aşağıdaki tek satırlı
 php -r "eval('?>' . file_get_contents('https://raw.githubusercontent.com/RecepKandemir22/kutuphane/main/installer.php'));"
 ```
 
-Bu komut projenizde otomatik olarak bir `forge-shield/` klasörü oluşturur ve içine şu 3 dosyayı güvenli bir şekilde indirir:
-1. `forge-shield/ForgeShield.php` (Arka yüz güvenlik ve doğrulama motoru)
-2. `forge-shield/forge-form.js` (Ön yüz asenkron Ajax & Captcha enjektör motoru)
-3. `forge-shield/forge-form.css` (Captcha stilleri, spinner ve bildirim/toast tasarımları)
+### Bu Kurulum Sihirbazı Neler Yapar?
 
-Ayrıca projenizin kök dizininde entegrasyon adımlarını içeren **`FORGE_SHIELD_GUIDE.txt`** isimli bir kılavuz dosyası oluşturur.
+1. **Dosyaları İndirir:** Projenizde otomatik olarak bir `forge-shield/` klasörü oluşturur ve gerekli CSS/JS/PHP dosyalarını indirir.
+2. **Otomatik Entegrasyon Sağlar (Sihirbaz Sorusu):** Kurulum sırasında sihirbazın soracağı soruya onay (`y`) verirseniz, projenizdeki form ve backend dosyalarınızı otomatik olarak tarayarak:
+   - Form etiketlerinize otomatik olarak `class="forge-form"` enjekte eder.
+   - Sayfa başlarına CSS ve sonlarına JS bağlantılarını otomatik yerleştirir.
+   - Backend PHP post dosyanızın en başına `ForgeShield::validate()` güvenlik kontrolünü otomatik ekler.
+   *(Böylece manuel olarak kod eklemenize veya değiştirmenize gerek kalmaz.)*
+3. **config.php Dosyasını Oluşturur:** Projenin kök dizininde hazır bir `config.php` dosyası oluşturur. Bu dosyada tüm teknik Gmail SMTP ayarları otomatik tanımlanmıştır. Sizin sadece 3 alanı (Gönderici Mail, 16 haneli Google Uygulama Şifresi ve Alıcı Mail) doldurmanız yeterlidir.
+4. **Kılavuz Dosyası Üretir:** Detayları içeren `FORGE_SHIELD_GUIDE.txt` dosyasını oluşturur.
 
 ---
 
@@ -94,31 +98,31 @@ ForgeShield::responseJSON('success', 'Mesajınız başarıyla ve güvenle iletil
 
 ## 📧 Gerçek E-Posta (SMTP) Gönderim Ayarları
 
-Formunuzdan gönderilen e-postaların alıcı adresine gerçekten ulaşması için kök dizinde otomatik olarak oluşturulan `config.php` dosyasını düzenlemeniz gerekmektedir.
+Formunuzdan gönderilen e-postaların alıcı adresine gerçekten ulaşması için kök dizinde otomatik olarak oluşturulan `config.php` dosyasını düzenlemeniz gerekmektedir. 
+
+Gmail SMTP ayarları (Sunucu, Port, Güvenlik) otomatik olarak pre-configured (ön-tanımlı) gelmektedir. Bu nedenle teknik detaylarla uğraşmanıza gerek yoktur.
 
 ### Hızlı Yapılandırma Adımları
 
 1. Projenizin ana dizinindeki `config.php` dosyasını bir kod editörüyle açın.
-2. `SMTP_DEVELOPER_MODE` sabitini `false` olarak güncelleyin. (Bu değer `true` iken gönderim simüle edilir ve e-postalar gerçekten gönderilmez):
+2. Gerçek mail gönderimini aktif etmek için `SMTP_DEVELOPER_MODE` sabitini `false` yapın:
    ```php
    define('SMTP_DEVELOPER_MODE', false);
    ```
-3. SMTP ayarlarını kendi e-posta hesabınıza veya e-posta servis sağlayıcınıza (Gmail, Outlook, Yandex, Mailtrap vb.) göre doldurun:
+3. Dosyanın üst kısmındaki **sadece 3 alanı** kendi bilgilerinize göre doldurun:
 
 | Sabit Adı | Açıklama | Örnek Değer (Gmail) |
 |---|---|---|
-| `SMTP_HOST` | SMTP Sunucu Adresi | `'smtp.gmail.com'` |
-| `SMTP_PORT` | SMTP Portu (TLS için 587, SSL için 465) | `587` |
-| `SMTP_SECURE` | Güvenlik Protokolü (`tls` veya `ssl`) | `'tls'` |
-| `SMTP_USER` | E-posta Kullanıcı Adınız | `'ornek@gmail.com'` |
-| `SMTP_PASS` | E-posta Şifreniz (Aşağıdaki nota bakın) | `'abcd efgh ijkl mnop'` |
-| `SMTP_FROM_EMAIL`| Gönderici E-posta Adresi | `'ornek@gmail.com'` |
-| `SMTP_FROM_NAME` | E-postada görünecek gönderici adı | `'İletişim Formu'` |
-| `SMTP_TO_EMAIL`  | Formun iletileceği yetkili e-posta adresi | `'hedef-yetkili@gmail.com'` |
+| `SMTP_USER` | Gönderici Gmail Adresiniz (Oturum açacak hesap) | `'ornek@gmail.com'` |
+| `SMTP_PASS` | Gmail Uygulama Şifreniz (16 Haneli Özel Şifre) | `'abcd efgh ijkl mnop'` |
+| `SMTP_TO_EMAIL` | Form mesajlarının iletileceği hedef e-posta adresi | `'hedef-yetkili@gmail.com'` |
+
+> [!NOTE]
+> `SMTP_HOST` (`smtp.gmail.com`), `SMTP_PORT` (`587`), `SMTP_SECURE` (`tls`) ve `SMTP_AUTH` (`true`) gibi diğer tüm teknik SMTP ayarları arka planda Gmail uyumlu şekilde otomatik olarak dolu gelmektedir. Bu alanlara dokunmanıza gerek yoktur.
 
 > [!WARNING]
 > **Gmail Kullanıcıları İçin Önemli Güvenlik Notu:**
-> Gmail, güvenlik nedeniyle kişisel hesabınızın normal şifresi ile doğrudan SMTP bağlantısına izin vermez. Gmail kullanıyorsanız:
+> Gmail, güvenlik nedeniyle kişisel hesabınızın normal şifresi ile doğrudan SMTP bağlantısına izin vermez. Bu nedenle `SMTP_PASS` alanına normal şifrenizi değil, Google'dan alacağınız **16 haneli Uygulama Şifresi**ni girmelisiniz:
 > 1. Google Hesabınızda **2 Adımlı Doğrulama**yı açın.
 > 2. Arama kutusuna **Uygulama Şifreleri (App Passwords)** yazarak ilgili sayfaya gidin.
 > 3. Yeni bir uygulama şifresi üretin (örn. "Web Form" adı vererek).
