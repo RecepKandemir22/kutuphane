@@ -110,11 +110,7 @@ Gmail SMTP ayarları (Sunucu, Port, Güvenlik) otomatik olarak pre-configured (�
 ### Hızlı Yapılandırma Adımları
 
 1. Projenizin ana dizinindeki `config.php` dosyasını bir kod editörüyle açın.
-2. Gerçek mail gönderimini aktif etmek için `SMTP_DEVELOPER_MODE` sabitini `false` yapın:
-   ```php
-   define('SMTP_DEVELOPER_MODE', false);
-   ```
-3. Dosyanın üst kısmındaki **sadece 3 alanı** kendi bilgilerinize göre doldurun:
+2. Dosyanın üst kısmındaki **sadece 3 alanı** kendi bilgilerinize göre doldurun:
 
 | Sabit Adı | Açıklama | Örnek Değer (Gmail) |
 |---|---|---|
