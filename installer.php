@@ -369,8 +369,7 @@ Gmail SMTP için gerekli sunucu, port, protokol vb. tüm teknik ayarlar
 otomatik olarak tanımlanmıştır ve değiştirmenize gerek yoktur.
 
 1. "config.php" dosyasını açın.
-2. Gerçek gönderimi aktif etmek için "SMTP_DEVELOPER_MODE" ayarını "false" yapın:
-   define('SMTP_DEVELOPER_MODE', false);
+2. SMTP_DEVELOPER_MODE varsayılan olarak "false" (gerçek gönderim aktif) durumundadır.
 3. Üst kısımdaki SADECE 3 ALANI doldurun:
    - SMTP_USER: Gönderen Gmail adresiniz (Oturum açacak hesap)
    - SMTP_PASS: Google hesabınızdan alacağınız 16 haneli "Uygulama Şifresi"
@@ -410,7 +409,7 @@ if (!file_exists($configPath)) {
 // Geliştirici Modu (Test Modu)
 // TRUE iken: E-posta gönderimi simüle edilir (tasarım testi için).
 // FALSE iken: Gerçek e-posta gönderimi aktif olur.
-define('SMTP_DEVELOPER_MODE', true);
+define('SMTP_DEVELOPER_MODE', false);
 
 // =========================================================================
 // ✍️ DOLDURMANIZ GEREKEN ALANLAR (Sadece bu 3 alanı düzenleyin)
@@ -592,7 +591,7 @@ echo "  1. Formunuza otomatik olarak " . COLOR_BOLD . "class=\"forge-form\"" . C
 echo "  2. Sayfanıza otomatik olarak CSS ve script dosyaları bağlanmıştır.\n";
 echo "  3. PHPMailer otomatik olarak kuruldu (vendor/ klasörü oluşturuldu).\n";
 echo "  4. Gerçek mail gönderimi için " . COLOR_BOLD . "config.php" . COLOR_RESET . " dosyasını düzenleyin:\n";
-echo "       - SMTP_DEVELOPER_MODE => false yapın\n";
+echo "       - SMTP_DEVELOPER_MODE => false (varsayılan olarak zaten false)\n";
 echo "       - SMTP_USER: Gmail adresiniz\n";
 echo "       - SMTP_PASS: Google 16 haneli Uygulama Şifresi\n";
 echo "       - SMTP_TO_EMAIL: Mesajların gideceği e-posta\n\n";
