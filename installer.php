@@ -446,6 +446,40 @@ PHP;
     }
 }
 
+// 4. Install PHPMailer via Composer
+echo PHP_EOL;
+echo COLOR_BOLD . COLOR_INFO . "--------------------------------------------------------------------\n";
+echo "📦 PHPMailer Kurulumu (E-Posta Göndermek İçin Gerekli)\n";
+echo "--------------------------------------------------------------------\n" . COLOR_RESET;
+
+$composerAvailable = false;
+// Check if composer is available
+$composerCheck = shell_exec('composer --version 2>&1');
+if ($composerCheck && strpos($composerCheck, 'Composer') !== false) {
+    $composerAvailable = true;
+}
+
+if ($composerAvailable) {
+    if (file_exists($currentDir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php')) {
+        logConsole('info', "PHPMailer zaten kurulu (vendor/autoload.php mevcut). Atlanıyor.");
+    } else {
+        logConsole('info', "PHPMailer kuruluyor: composer require phpmailer/phpmailer ...");
+        $output = [];
+        $returnCode = 0;
+        exec('composer require phpmailer/phpmailer 2>&1', $output, $returnCode);
+        if ($returnCode === 0) {
+            logConsole('success', "PHPMailer başarıyla kuruldu! (vendor/ klasörü oluşturuldu)");
+        } else {
+            logConsole('error', "PHPMailer kurulumu başarısız. Çıktı: " . implode(' ', $output));
+            logConsole('warning', "Manuel olarak şu komutu çalıştırın: composer require phpmailer/phpmailer");
+        }
+    }
+} else {
+    logConsole('warning', "Composer bulunamadı! E-posta gönderebilmek için PHPMailer'ı manuel kurmanız gerekiyor.");
+    logConsole('info', "Terminalde şu komutu çalıştırın: composer require phpmailer/phpmailer");
+    logConsole('info', "Composer yüklemek için: https://getcomposer.org/download/");
+}
+
 echo PHP_EOL;
 echo COLOR_BOLD . COLOR_INFO . "--------------------------------------------------------------------\n";
 echo "🔄 Otomatik Entegrasyon Sihirbazı (Auto-Integration Wizard)\n";
@@ -507,7 +541,12 @@ echo "====================================================================\n" . 
 echo "Sistemi kullanmaya başlamak için şu adımları izleyin:\n\n";
 echo "  1. Formunuza otomatik olarak " . COLOR_BOLD . "class=\"forge-form\"" . COLOR_RESET . " eklenmiştir.\n";
 echo "  2. Sayfanıza otomatik olarak CSS ve script dosyaları bağlanmıştır.\n";
-echo "  3. Gerçek mail gönderimi için " . COLOR_BOLD . "config.php" . COLOR_RESET . " dosyasını düzenleyin.\n\n";
+echo "  3. PHPMailer otomatik olarak kuruldu (vendor/ klasörü oluşturuldu).\n";
+echo "  4. Gerçek mail gönderimi için " . COLOR_BOLD . "config.php" . COLOR_RESET . " dosyasını düzenleyin:\n";
+echo "       - SMTP_DEVELOPER_MODE => false yapın\n";
+echo "       - SMTP_USER: Gmail adresiniz\n";
+echo "       - SMTP_PASS: Google 16 haneli Uygulama Şifresi\n";
+echo "       - SMTP_TO_EMAIL: Mesajların gideceği e-posta\n\n";
 echo "💡 Kurulum detayları ve entegrasyon kodları " . COLOR_BOLD . "FORGE_SHIELD_GUIDE.txt" . COLOR_RESET . " dosyasına kaydedildi.\n";
 echo "💡 Dilediğiniz zaman şu terminal komutuyla da manuel entegrasyon yapabilirsiniz:\n";
 echo "   " . COLOR_BOLD . "php installer.php integrate [form_dosyasi.php] [post_dosyasi.php]" . COLOR_RESET . "\n\n";
