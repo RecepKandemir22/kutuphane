@@ -61,7 +61,150 @@ function logConsole($type, $msg) {
     echo $color . $prefix . $msg . COLOR_RESET . PHP_EOL;
 }
 
+function injectCodeIntoFiles($formFile, $postFile) {
+    global $currentDir;
+    
+    if (!empty($formFile)) {
+        $formFilePath = $currentDir . DIRECTORY_SEPARATOR . $formFile;
+        if (!file_exists($formFilePath)) {
+            logConsole('error', "Hata: '{$formFile}' dosyası bulunamadı.");
+            return false;
+        }
+        
+        $formContent = file_get_contents($formFilePath);
+        $modified = false;
+        
+        // 1. Inject CSS link inside <head> if not exists
+        if (strpos($formContent, 'forge-form.css') === false) {
+            $cssTag = '    <link rel="stylesheet" href="forge-shield/forge-form.css">' . PHP_EOL;
+            if (strpos($formContent, '</head>') !== false) {
+                $formContent = str_replace('</head>', $cssTag . '</head>', $formContent);
+                $modified = true;
+                logConsole('success', "'{$formFile}' içerisine CSS stil bağlantısı eklendi.");
+            } elseif (strpos($formContent, '<head>') !== false) {
+                $formContent = str_replace('<head>', '<head>' . PHP_EOL . $cssTag, $formContent);
+                $modified = true;
+                logConsole('success', "'{$formFile}' içerisine CSS stil bağlantısı eklendi.");
+            }
+        } else {
+            logConsole('info', "'{$formFile}' içerisinde CSS zaten mevcut.");
+        }
+        
+        // 2. Inject JS script tag before </body> if not exists
+        if (strpos($formContent, 'forge-form.js') === false) {
+            $jsTag = '    <script src="forge-shield/forge-form.js" defer></script>' . PHP_EOL;
+            if (strpos($formContent, '</body>') !== false) {
+                $formContent = str_replace('</body>', $jsTag . '</body>', $formContent);
+                $modified = true;
+                logConsole('success', "'{$formFile}' içerisine JS script bağlantısı eklendi.");
+            } else {
+                $formContent .= PHP_EOL . $jsTag;
+                $modified = true;
+                logConsole('success', "'{$formFile}' sonuna JS script bağlantısı eklendi.");
+            }
+        } else {
+            logConsole('info', "'{$formFile}' içerisinde JS zaten mevcut.");
+        }
+        
+        // 3. Inject class="forge-form" into <form> tags
+        if (strpos($formContent, '<form') !== false) {
+            // Find all <form ...> tags
+            $pattern = '/<form([^>]*?)>/i';
+            $formContent = preg_replace_callback($pattern, function($matches) use (&$modified) {
+                $attributes = $matches[1];
+                
+                // If it already has forge-form class, do nothing
+                if (preg_match('/class=["\'][^"\']*?forge-form[^"\']*?["\']/i', $attributes)) {
+                    return $matches[0];
+                }
+                
+                $modified = true;
+                // If it already has some other class
+                if (preg_match('/class=["\']([^"\']*?)["\']/i', $attributes, $classMatches)) {
+                    $oldClassAttr = $classMatches[0];
+                    $newClassAttr = 'class="' . trim($classMatches[1]) . ' forge-form"';
+                    $newAttributes = str_replace($oldClassAttr, $newClassAttr, $attributes);
+                    return "<form{$newAttributes}>";
+                } else {
+                    // No class attribute, append it
+                    return "<form class=\"forge-form\"{$attributes}>";
+                }
+            }, $formContent);
+            
+            if ($modified) {
+                logConsole('success', "'{$formFile}' üzerindeki form etiketlerine 'forge-form' sınıfı enjekte edildi.");
+            }
+        }
+        
+        if ($modified) {
+            file_put_contents($formFilePath, $formContent);
+        }
+    }
+    
+    if (!empty($postFile)) {
+        $postFilePath = $currentDir . DIRECTORY_SEPARATOR . $postFile;
+        if (!file_exists($postFilePath)) {
+            logConsole('error', "Hata: '{$postFile}' dosyası bulunamadı.");
+            return false;
+        }
+        
+        $postContent = file_get_contents($postFilePath);
+        $modified = false;
+        
+        // 1. Inject security validation block into PHP file
+        if (strpos($postContent, 'ForgeShield::validate') === false) {
+            $securityBlock = <<<PHP
+
+// --- ForgeForm & Shield Güvenlik Entegrasyonu ---
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once 'forge-shield/ForgeShield.php';
+\$cleanData = ForgeShield::validate(20);
+// ------------------------------------------------
+
+PHP;
+            if (strpos($postContent, '<?php') !== false) {
+                // Insert right after <?php
+                $pos = strpos($postContent, '<?php');
+                $postContent = substr_replace($postContent, "<?php" . $securityBlock, $pos, 5);
+                $modified = true;
+                logConsole('success', "'{$postFile}' başına güvenlik ve doğrulama kodları entegre edildi.");
+            } else {
+                // Prepend raw PHP tags
+                $postContent = "<?php" . $securityBlock . "?>" . PHP_EOL . $postContent;
+                $modified = true;
+                logConsole('success', "'{$postFile}' başına PHP etiketleriyle birlikte güvenlik kodları entegre edildi.");
+            }
+        } else {
+            logConsole('info', "'{$postFile}' içerisinde ForgeShield doğrulaması zaten mevcut.");
+        }
+        
+        if ($modified) {
+            file_put_contents($postFilePath, $postContent);
+        }
+    }
+    
+    return true;
+}
+
 $currentDir = getcwd();
+
+// CLI Entegrasyon Komutu Kontrolü
+if (isset($argv[1]) && $argv[1] === 'integrate') {
+    $formFile = isset($argv[2]) ? $argv[2] : '';
+    $postFile = isset($argv[3]) ? $argv[3] : '';
+    
+    if (empty($formFile) && empty($postFile)) {
+        echo COLOR_BOLD . COLOR_ERROR . "Hata: En az bir dosya adı girmelisiniz.\n" . COLOR_RESET;
+        echo "Kullanım: php installer.php integrate [form_dosyasi.php] [post_dosyasi.php]\n";
+        exit(1);
+    }
+    
+    injectCodeIntoFiles($formFile, $postFile);
+    exit(0);
+}
+
 echo "Kurulum Dizini (Installation Directory): " . COLOR_BOLD . $currentDir . COLOR_RESET . PHP_EOL;
 $confirm = prompt("Bu dizine ForgeForm & Shield dosyalarını kurmak istiyor musunuz? (y/n)", "y");
 
@@ -236,6 +379,18 @@ if (file_put_contents($guidePath, $guideContent) !== false) {
 }
 
 echo PHP_EOL;
+echo COLOR_BOLD . COLOR_INFO . "--------------------------------------------------------------------\n";
+echo "🔄 Otomatik Entegrasyon Sihirbazı (Auto-Integration Wizard)\n";
+echo "--------------------------------------------------------------------\n" . COLOR_RESET;
+$auto = prompt("Mevcut dosyalarınıza entegrasyon kodlarını otomatik enjekte etmek ister misiniz? (y/n)", "n");
+if (strtolower($auto) === 'y' || strtolower($auto) === 'yes') {
+    $formFile = prompt("Formun bulunduğu HTML/PHP dosyası (örn. index.php veya boş geçin)", "index.php");
+    $postFile = prompt("Form verilerini alan PHP dosyası (örn. post.php veya boş geçin)", "");
+    injectCodeIntoFiles($formFile, $postFile);
+    echo PHP_EOL;
+}
+
+echo PHP_EOL;
 echo COLOR_BOLD . COLOR_SUCCESS . "====================================================================\n";
 echo "🎉 Kurulum Tamamlandı! ({$successCount} dosya kuruldu/güncellendi) 🎉\n";
 echo "====================================================================\n" . COLOR_RESET;
@@ -248,4 +403,6 @@ echo "     <script src=\"forge-shield/forge-form.js\" defer></script>" . COLOR_R
 echo "  4. Form post verilerini işleyen dosyanızın en başında şu kontrolü yapın:\n";
 echo "     " . COLOR_BOLD . "\$cleanData = ForgeShield::validate();" . COLOR_RESET . "\n\n";
 echo "💡 Kurulum detayları ve entegrasyon kodları " . COLOR_BOLD . "FORGE_SHIELD_GUIDE.txt" . COLOR_RESET . " dosyasına kaydedildi.\n";
+echo "💡 Dilediğiniz zaman şu terminal komutuyla da entegrasyon yapabilirsiniz:\n";
+echo "   " . COLOR_BOLD . "php installer.php integrate [form_dosyasi.php] [post_dosyasi.php]" . COLOR_RESET . "\n\n";
 echo "Gelişmiş Ajax Form ve Güvenlik kütüphanesini kullandığınız için teşekkürler! ⚡\n";
