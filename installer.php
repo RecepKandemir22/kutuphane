@@ -446,38 +446,87 @@ PHP;
     }
 }
 
-// 4. Install PHPMailer via Composer
+// 4. Install PHPMailer directly from GitHub (no composer needed)
 echo PHP_EOL;
 echo COLOR_BOLD . COLOR_INFO . "--------------------------------------------------------------------\n";
 echo "📦 PHPMailer Kurulumu (E-Posta Göndermek İçin Gerekli)\n";
 echo "--------------------------------------------------------------------\n" . COLOR_RESET;
 
-$composerAvailable = false;
-// Check if composer is available
-$composerCheck = shell_exec('composer --version 2>&1');
-if ($composerCheck && strpos($composerCheck, 'Composer') !== false) {
-    $composerAvailable = true;
-}
+$vendorDir    = $currentDir . DIRECTORY_SEPARATOR . 'vendor';
+$phpmailerDir = $vendorDir . DIRECTORY_SEPARATOR . 'phpmailer' . DIRECTORY_SEPARATOR . 'phpmailer' . DIRECTORY_SEPARATOR . 'src';
+$autoloadPath = $vendorDir . DIRECTORY_SEPARATOR . 'autoload.php';
 
-if ($composerAvailable) {
-    if (file_exists($currentDir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php')) {
-        logConsole('info', "PHPMailer zaten kurulu (vendor/autoload.php mevcut). Atlanıyor.");
-    } else {
-        logConsole('info', "PHPMailer kuruluyor: composer require phpmailer/phpmailer ...");
-        $output = [];
-        $returnCode = 0;
-        exec('composer require phpmailer/phpmailer 2>&1', $output, $returnCode);
-        if ($returnCode === 0) {
-            logConsole('success', "PHPMailer başarıyla kuruldu! (vendor/ klasörü oluşturuldu)");
-        } else {
-            logConsole('error', "PHPMailer kurulumu başarısız. Çıktı: " . implode(' ', $output));
-            logConsole('warning', "Manuel olarak şu komutu çalıştırın: composer require phpmailer/phpmailer");
-        }
-    }
+if (file_exists($autoloadPath)) {
+    logConsole('info', "PHPMailer zaten kurulu (vendor/autoload.php mevcut). Atlanıyor.");
 } else {
-    logConsole('warning', "Composer bulunamadı! E-posta gönderebilmek için PHPMailer'ı manuel kurmanız gerekiyor.");
-    logConsole('info', "Terminalde şu komutu çalıştırın: composer require phpmailer/phpmailer");
-    logConsole('info', "Composer yüklemek için: https://getcomposer.org/download/");
+    // Create vendor directory structure
+    if (!is_dir($phpmailerDir)) {
+        mkdir($phpmailerDir, 0755, true);
+    }
+
+    $phpmailerFiles = [
+        'PHPMailer.php' => 'https://raw.githubusercontent.com/PHPMailer/PHPMailer/master/src/PHPMailer.php',
+        'SMTP.php'      => 'https://raw.githubusercontent.com/PHPMailer/PHPMailer/master/src/SMTP.php',
+        'Exception.php' => 'https://raw.githubusercontent.com/PHPMailer/PHPMailer/master/src/Exception.php',
+    ];
+
+    $phpmailerSuccess = true;
+    foreach ($phpmailerFiles as $fileName => $url) {
+        $targetPath = $phpmailerDir . DIRECTORY_SEPARATOR . $fileName;
+        logConsole('info', "İndiriliyor: vendor/phpmailer/phpmailer/src/{$fileName}...");
+
+        $content = false;
+        if (extension_loaded('curl')) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'ForgeForm-Installer/1.0');
+            $content = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if ($httpCode !== 200) $content = false;
+        }
+        if ($content === false && ini_get('allow_url_fopen')) {
+            $ctx = stream_context_create(['http' => ['method' => 'GET', 'header' => "User-Agent: ForgeForm-Installer/1.0\r\n"]]);
+            $content = @file_get_contents($url, false, $ctx);
+        }
+
+        if ($content === false) {
+            logConsole('error', "Hata: '{$fileName}' indirilemedi.");
+            $phpmailerSuccess = false;
+            continue;
+        }
+        file_put_contents($targetPath, $content);
+        logConsole('success', "Kuruldu: vendor/phpmailer/phpmailer/src/{$fileName}");
+    }
+
+    if ($phpmailerSuccess) {
+        // Create a minimal autoload.php that loads PHPMailer classes
+        $autoloadContent = <<<'AUTOLOAD'
+<?php
+/**
+ * Minimal Autoloader - ForgeForm Installer tarafından otomatik oluşturuldu.
+ * PHPMailer sınıflarını doğrudan yükler (Composer gerektirmez).
+ */
+spl_autoload_register(function ($class) {
+    $classMap = [
+        'PHPMailer\\PHPMailer\\PHPMailer' => __DIR__ . '/phpmailer/phpmailer/src/PHPMailer.php',
+        'PHPMailer\\PHPMailer\\SMTP'      => __DIR__ . '/phpmailer/phpmailer/src/SMTP.php',
+        'PHPMailer\\PHPMailer\\Exception' => __DIR__ . '/phpmailer/phpmailer/src/Exception.php',
+    ];
+    if (isset($classMap[$class])) {
+        require_once $classMap[$class];
+    }
+});
+AUTOLOAD;
+        file_put_contents($autoloadPath, $autoloadContent);
+        logConsole('success', "vendor/autoload.php oluşturuldu. PHPMailer kullanıma hazır!");
+        $successCount++;
+    } else {
+        logConsole('error', "PHPMailer kurulumu tamamlanamadı. İnternet bağlantınızı kontrol edin.");
+    }
 }
 
 echo PHP_EOL;
