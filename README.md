@@ -150,5 +150,16 @@ Form üzerinden gelen tüm veriler otomatik olarak `strip_tags` ve `htmlspecialc
 
 ---
 
+## 📦 Bağımlılıklar ve `composer.lock` Hakkında Bilgilendirme
+
+E-posta gönderimi için PHPMailer kütüphanesi kurulduğunda projenizde `composer.json` ve **`composer.lock`** (Kilitli Dosya) adında dosyalar oluşur. 
+
+* **`composer.lock` Nedir?**
+  Bu dosya, projenin hangi kütüphane sürümünü (Örn: PHPMailer v7.1.1) kullandığını kaydeder (kilitler). Böylece projeniz başka bir sunucuya taşındığında aynı sürümlerin yüklenmesini garanti eder.
+* **Gizli Bilgi / API İçerir mi?**
+  **Kesinlikle Hayır.** `composer.lock` dosyasının içinde hiçbir kişisel e-posta şifreniz, API anahtarınız veya gizli bilginiz bulunmaz. İçeriği tamamen PHP kütüphanelerinin indirme linkleri, sürüm numaraları ve güvenlik doğrulama kodlarından (hash) oluşur. Bu dosyanın projenizde durması veya GitHub'a yüklenmesi **100% güvenlidir**.
+
+---
+
 ## 📄 Lisans
 Bu proje **MIT Lisansı** altında dağıtılmaktadır. Dilediğiniz gibi ticari ve bireysel projelerinizde kullanabilirsiniz.

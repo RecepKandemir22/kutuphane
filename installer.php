@@ -439,7 +439,6 @@ define('SMTP_AUTH', true);
 
 // Gönderici Başlık Bilgileri
 define('SMTP_FROM_EMAIL', SMTP_USER); // Gönderen e-posta (Oturum açan hesap ile aynı olmalıdır)
-define('SMTP_FROM_NAME', 'ForgeForm İletişim');
 PHP;
 
     if (file_put_contents($configPath, $configContent) !== false) {
