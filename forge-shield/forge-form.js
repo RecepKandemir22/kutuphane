@@ -21,7 +21,7 @@ function initForgeForms() {
  * Sets up Shield configuration, csrf token, mathematical captcha, and AJAX interceptor for a form.
  */
 async function setupFormShield(form) {
-    const shieldPath = form.getAttribute('data-shield-path') || 'ForgeShield.php';
+    const shieldPath = form.getAttribute('data-shield-path') || 'forge-shield/ForgeShield.php';
     
     // 1. Inject or locate security container
     let shieldWrapper = form.querySelector('.forge-shield-wrapper');

@@ -70,11 +70,21 @@ if (strtolower($confirm) !== 'y' && strtolower($confirm) !== 'yes') {
     exit(0);
 }
 
+// 1. Create forge-shield sub-directory if it doesn't exist
+$subDir = $currentDir . DIRECTORY_SEPARATOR . 'forge-shield';
+if (!is_dir($subDir)) {
+    if (!mkdir($subDir, 0755, true)) {
+        logConsole('error', "Hata: 'forge-shield' klasörü oluşturulamadı. Yazma izinlerini kontrol edin.");
+        exit(1);
+    }
+    logConsole('success', "'forge-shield' klasörü oluşturuldu.");
+}
+
 // Files to download
 $files = [
-    'ForgeShield.php' => 'https://raw.githubusercontent.com/RecepKandemir22/kutuphane/main/ForgeShield.php',
-    'forge-form.js'   => 'https://raw.githubusercontent.com/RecepKandemir22/kutuphane/main/forge-form.js',
-    'forge-form.css'  => 'https://raw.githubusercontent.com/RecepKandemir22/kutuphane/main/forge-form.css'
+    'ForgeShield.php' => 'https://raw.githubusercontent.com/RecepKandemir22/kutuphane/main/forge-shield/ForgeShield.php',
+    'forge-form.js'   => 'https://raw.githubusercontent.com/RecepKandemir22/kutuphane/main/forge-shield/forge-form.js',
+    'forge-form.css'  => 'https://raw.githubusercontent.com/RecepKandemir22/kutuphane/main/forge-shield/forge-form.css'
 ];
 
 logConsole('info', "Uyum kontrolü yapılıyor...");
@@ -87,19 +97,19 @@ logConsole('success', "Kontroller tamamlandı. Dosyalar GitHub üzerinden indiri
 
 $successCount = 0;
 foreach ($files as $fileName => $url) {
-    $targetPath = $currentDir . DIRECTORY_SEPARATOR . $fileName;
+    $targetPath = $subDir . DIRECTORY_SEPARATOR . $fileName;
     
     // Check if target file already exists
     if (file_exists($targetPath)) {
-        logConsole('warning', "'{$fileName}' dosyası zaten mevcut. Üzerine yazılmasını istiyor musunuz? (y/n)");
+        logConsole('warning', "'forge-shield/{$fileName}' dosyası zaten mevcut. Üzerine yazılmasını istiyor musunuz? (y/n)");
         $overwrite = prompt("Üzerine yaz? (Overwrite?)", "y");
         if (strtolower($overwrite) !== 'y' && strtolower($overwrite) !== 'yes') {
-            logConsole('info', "'{$fileName}' kurulumu atlandı.");
+            logConsole('info', "'forge-shield/{$fileName}' kurulumu atlandı.");
             continue;
         }
     }
     
-    logConsole('info', "İndiriliyor: {$fileName}...");
+    logConsole('info', "İndiriliyor: forge-shield/{$fileName}...");
     
     $content = false;
     // Method 1: Curl
@@ -132,16 +142,97 @@ foreach ($files as $fileName => $url) {
     }
     
     if ($content === false) {
-        logConsole('error', "Hata: '{$fileName}' dosyası indirilemedi. İnternet bağlantınızı kontrol edin.");
+        logConsole('error', "Hata: 'forge-shield/{$fileName}' dosyası indirilemedi. İnternet bağlantınızı kontrol edin.");
         continue;
     }
     
     if (file_put_contents($targetPath, $content) !== false) {
-        logConsole('success', "Kuruldu: {$fileName}");
+        logConsole('success', "Kuruldu: forge-shield/{$fileName}");
         $successCount++;
     } else {
-        logConsole('error', "Hata: '{$fileName}' dosyası yerel diske yazılamadı.");
+        logConsole('error', "Hata: 'forge-shield/{$fileName}' dosyası yerel diske yazılamadı.");
     }
+}
+
+// 2. Create FORGE_SHIELD_GUIDE.txt file in the root of the project
+$guidePath = $currentDir . DIRECTORY_SEPARATOR . 'FORGE_SHIELD_GUIDE.txt';
+$guideContent = <<<EOT
+================================================================================
+🛡️ FORGEFORM & SHIELD - ENTEGRASYON KILAVUZU
+================================================================================
+
+ForgeForm & Shield başarıyla kuruldu! Bu kılavuz, kütüphaneyi mevcut sitenize
+nasıl entegre edeceğinizi adım adım açıklar.
+
+--------------------------------------------------------------------------------
+1. ADIM: HTML FORM ENTEGRASYONU
+--------------------------------------------------------------------------------
+Korumak ve AJAX ile göndermek istediğiniz formunuza "forge-form" class'ını ekleyin.
+
+Örnek:
+<form action="post-islemi.php" method="POST" class="forge-form">
+    <!-- Form alanlarınız (Ad, Soyad, Mesaj vs.) -->
+    <input type="text" name="name" required>
+    <button type="submit">Gönder</button>
+</form>
+
+--------------------------------------------------------------------------------
+2. ADIM: STİL VE SCRIPT DOSYALARININ EKLENMESİ
+--------------------------------------------------------------------------------
+Formun bulunduğu HTML sayfasının <head> bölümüne CSS dosyasını, sayfanın sonuna
+(veya defer niteliği ile) JS dosyasını ekleyin:
+
+<!-- head etiketleri arasına -->
+<link rel="stylesheet" href="forge-shield/forge-form.css">
+
+<!-- body kapanışından hemen önce -->
+<script src="forge-shield/forge-form.js" defer></script>
+
+--------------------------------------------------------------------------------
+3. ADIM: BACKEND PHP GÜVENLİK KONTROLÜ
+--------------------------------------------------------------------------------
+Form verilerinin post edildiği PHP dosyanızın (formun action kısmındaki dosya)
+en başına şu PHP kodlarını ekleyin:
+
+<?php
+// PHP session başlatılmadıysa başlatın (CSRF ve Captcha kontrolü için gereklidir)
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// 1. Güvenlik sınıfını dahil edin
+require_once 'forge-shield/ForgeShield.php';
+
+// 2. Doğrulamayı çalıştırın (CSRF, Matematiksel Captcha, XSS Temizliği ve Rate Limit)
+// validate(20) ifadesi: aynı kullanıcının 20 saniyede en fazla 1 istek atabilmesini sağlar (Anti-Flood).
+// Hata durumunda otomatik olarak JSON yanıtı döner ve script çalışmasını durdurur.
+\$cleanData = ForgeShield::validate(20);
+
+// 3. Artık \$cleanData içindeki verileriniz temizlenmiş ve güvenlidir.
+\$name = \$cleanData['name'];
+
+// Buradan sonra mail gönderme veya veritabanı kayıt işlemlerinizi yapabilirsiniz.
+// İşlem başarılı olduğunda ön yüze başarı bildirimini şu şekilde gönderin:
+ForgeShield::responseJSON('success', 'Mesajınız başarıyla ve güvenle gönderildi!');
+?>
+
+--------------------------------------------------------------------------------
+🛡️ Hangi Korumalar Sağlanıyor?
+--------------------------------------------------------------------------------
+1. CSRF Koruması: Dış sitelerden gelen sahte form gönderimlerini engeller.
+2. Matematiksel Captcha: Spam botlarını ve otomatik form doldurucuları durdurur.
+3. Rate Limiting (Anti-Flood): Belirtilen sürede (örn. 20 sn) tek gönderim limiti uygular.
+4. XSS Temizliği: Gelen tüm verilere strip_tags ve htmlspecialchars uygular.
+5. Çift Tıklama Engeli: Gönder butonunu işlem süresince kilitler ve spinner gösterir.
+
+ForgeForm & Shield'ı tercih ettiğiniz için teşekkür ederiz!
+================================================================================
+EOT;
+
+if (file_put_contents($guidePath, $guideContent) !== false) {
+    logConsole('success', "Entegrasyon kılavuzu oluşturuldu: FORGE_SHIELD_GUIDE.txt");
+} else {
+    logConsole('warning', "Entegrasyon kılavuzu dosyası (FORGE_SHIELD_GUIDE.txt) oluşturulamadı.");
 }
 
 echo PHP_EOL;
@@ -150,10 +241,11 @@ echo "🎉 Kurulum Tamamlandı! ({$successCount} dosya kuruldu/güncellendi) �
 echo "====================================================================\n" . COLOR_RESET;
 echo "Sistemi kullanmaya başlamak için şu adımları izleyin:\n\n";
 echo "  1. Formunuza " . COLOR_BOLD . "class=\"forge-form\"" . COLOR_RESET . " ekleyin.\n";
-echo "  2. Sayfanızın başına " . COLOR_BOLD . "require_once 'ForgeShield.php';" . COLOR_RESET . " ekleyin.\n";
+echo "  2. Sayfanızın başına " . COLOR_BOLD . "require_once 'forge-shield/ForgeShield.php';" . COLOR_RESET . " ekleyin.\n";
 echo "  3. HTML sayfanızın head etiketlerine stil ve script dosyalarını bağlayın:\n";
-echo "     " . COLOR_BOLD . "<link rel=\"stylesheet\" href=\"forge-form.css\">\n";
-echo "     <script src=\"forge-form.js\" defer></script>" . COLOR_RESET . "\n";
+echo "     " . COLOR_BOLD . "<link rel=\"stylesheet\" href=\"forge-shield/forge-form.css\">\n";
+echo "     <script src=\"forge-shield/forge-form.js\" defer></script>" . COLOR_RESET . "\n";
 echo "  4. Form post verilerini işleyen dosyanızın en başında şu kontrolü yapın:\n";
 echo "     " . COLOR_BOLD . "\$cleanData = ForgeShield::validate();" . COLOR_RESET . "\n\n";
+echo "💡 Kurulum detayları ve entegrasyon kodları " . COLOR_BOLD . "FORGE_SHIELD_GUIDE.txt" . COLOR_RESET . " dosyasına kaydedildi.\n";
 echo "Gelişmiş Ajax Form ve Güvenlik kütüphanesini kullandığınız için teşekkürler! ⚡\n";

@@ -14,10 +14,12 @@ Terminalinizi açıp projenizin kök dizinine giderek aşağıdaki tek satırlı
 php -r "eval('?>' . file_get_contents('https://raw.githubusercontent.com/RecepKandemir22/kutuphane/main/installer.php'));"
 ```
 
-Bu komut projenizin kök dizinine şu 3 dosyayı güvenli bir şekilde indirir:
-1. `ForgeShield.php` (Arka yüz güvenlik ve doğrulama motoru)
-2. `forge-form.js` (Ön yüz asenkron Ajax & Captcha enjektör motoru)
-3. `forge-form.css` (Captcha stilleri, spinner ve bildirim/toast tasarımları)
+Bu komut projenizde otomatik olarak bir `forge-shield/` klasörü oluşturur ve içine şu 3 dosyayı güvenli bir şekilde indirir:
+1. `forge-shield/ForgeShield.php` (Arka yüz güvenlik ve doğrulama motoru)
+2. `forge-shield/forge-form.js` (Ön yüz asenkron Ajax & Captcha enjektör motoru)
+3. `forge-shield/forge-form.css` (Captcha stilleri, spinner ve bildirim/toast tasarımları)
+
+Ayrıca projenizin kök dizininde entegrasyon adımlarını içeren **`FORGE_SHIELD_GUIDE.txt`** isimli bir kılavuz dosyası oluşturur.
 
 ---
 
@@ -33,7 +35,7 @@ Güzelleştirmek ve koruma altına almak istediğiniz formunuza `forge-form` sı
 <head>
     <meta charset="UTF-8">
     <!-- Paket stil dosyasını ekleyin -->
-    <link rel="stylesheet" href="forge-form.css">
+    <link rel="stylesheet" href="forge-shield/forge-form.css">
 </head>
 <body>
 
@@ -53,7 +55,7 @@ Güzelleştirmek ve koruma altına almak istediğiniz formunuza `forge-form` sı
     </form>
 
     <!-- Paket script dosyasını ekleyin -->
-    <script src="forge-form.js" defer></script>
+    <script src="forge-shield/forge-form.js" defer></script>
 </body>
 </html>
 ```
@@ -70,14 +72,14 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // 1. Güvenlik sınıfını dahil edin
-require_once 'ForgeShield.php';
+require_once 'forge-shield/ForgeShield.php';
 
 // 2. Doğrulamayı başlatın (Anti-Flood, CSRF, Captcha ve XSS Temizliği)
 // validate() metodu hata durumunda doğrudan JSON hatası döner ve betiği durdurur.
 // 20 saniye rate limit sınırı uygular (20 saniyede bir form gönderme izni).
 $cleanData = ForgeShield::validate(20);
 
-// 3. Doğrulama başarılı ise verileriniz artık tertemiz ve güvenlidir!
+// 3. Doğrulama başarılı ise veritabanı veya mail işlemlerinizi yapabilirsiniz.
 $email = $cleanData['email'];
 $message = $cleanData['message'];
 
