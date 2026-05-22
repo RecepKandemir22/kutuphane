@@ -22,8 +22,13 @@ php -r "eval('?>' . file_get_contents('https://raw.githubusercontent.com/RecepKa
    - Sayfa başlarına CSS ve sonlarına JS bağlantılarını otomatik yerleştirir.
    - Backend PHP post dosyanızın en başına `ForgeShield::validate()` güvenlik kontrolünü otomatik ekler.
    *(Böylece manuel olarak kod eklemenize veya değiştirmenize gerek kalmaz.)*
-3. **config.php Dosyasını Oluşturur:** Projenin kök dizininde hazır bir `config.php` dosyası oluşturur. Bu dosyada tüm teknik Gmail SMTP ayarları otomatik tanımlanmıştır. Sizin sadece 3 alanı (Gönderici Mail, 16 haneli Google Uygulama Şifresi ve Alıcı Mail) doldurmanız yeterlidir.
-4. **Kılavuz Dosyası Üretir:** Detayları içeren `FORGE_SHIELD_GUIDE.txt` dosyasını oluşturur.
+3. **Akıllı PHP Post Dosyası ve SMTP Entegrasyonu:** Formun gönderildiği PHP dosyasını (`action` parametresindeki hedef dosya, örn: `post.php`) algılar:
+   - Eğer bu dosya **mevcut değilse**, PHPMailer tabanlı, tam işlevli, AJAX uyumlu ve premium tasarımlı hazır bir SMTP mail gönderim şablonuyla otomatik olarak oluşturulur.
+   - Eğer dosya **mevcut ancak içinde SMTP/PHPMailer mantığı yoksa** (boş veya çok kısaysa doğrudan üzerine yazar; eğer dolu bir dosyaysa size sorarak eski dosyanızı `.bak` uzantısıyla yedekler) ve hazır SMTP şablonuyla günceller.
+4. **config.php Dosyasını Oluşturur:** Projenin kök dizininde hazır bir `config.php` dosyası oluşturur. Bu dosyada tüm teknik Gmail SMTP ayarları otomatik tanımlanmıştır. Sizin sadece 3 alanı (Gönderici Gmail adresiniz, 16 haneli Google Uygulama Şifreniz ve alıcı e-posta adresiniz) doldurmanız yeterlidir.
+5. **Composer Gerektirmeden PHPMailer Kurulumu:** E-posta gönderimi için gereken PHPMailer kütüphanesini ve otomatik yükleyicisini (`vendor/autoload.php`) doğrudan GitHub üzerinden indirerek kurar. Projenizde Composer kurulmasına veya çalıştırılmasına gerek yoktur.
+6. **Örnek Proje Oluşturma (Form Yoksa):** Eğer dizinde hiç form bulunamazsa, sihirbaz size SMTP mail gönderim özellikli örnek `index.php` ve `post.php` dosyaları oluşturmayı teklif eder.
+7. **Kılavuz Dosyası Üretir:** Tüm bu detayları ve manuel entegrasyon bilgilerini içeren `FORGE_SHIELD_GUIDE.txt` dosyasını oluşturur.
 
 ---
 
@@ -147,17 +152,6 @@ Olası dış kaynaklı sahte form post isteklerini engellemek için tarayıcı o
 
 ### 5. XSS Filtresi
 Form üzerinden gelen tüm veriler otomatik olarak `strip_tags` ve `htmlspecialchars` filtrelerinden geçirilerek zararlı HTML/JS kodlarından arındırılır.
-
----
-
-## 📦 Bağımlılıklar ve `composer.lock` Hakkında Bilgilendirme
-
-E-posta gönderimi için PHPMailer kütüphanesi kurulduğunda projenizde `composer.json` ve **`composer.lock`** (Kilitli Dosya) adında dosyalar oluşur. 
-
-* **`composer.lock` Nedir?**
-  Bu dosya, projenin hangi kütüphane sürümünü (Örn: PHPMailer v7.1.1) kullandığını kaydeder (kilitler). Böylece projeniz başka bir sunucuya taşındığında aynı sürümlerin yüklenmesini garanti eder.
-* **Gizli Bilgi / API İçerir mi?**
-  **Kesinlikle Hayır.** `composer.lock` dosyasının içinde hiçbir kişisel e-posta şifreniz, API anahtarınız veya gizli bilginiz bulunmaz. İçeriği tamamen PHP kütüphanelerinin indirme linkleri, sürüm numaraları ve güvenlik doğrulama kodlarından (hash) oluşur. Bu dosyanın projenizde durması veya GitHub'a yüklenmesi **100% güvenlidir**.
 
 ---
 
