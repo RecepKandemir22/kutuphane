@@ -1,0 +1,252 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/* Style Tokens */
+:root {
+    --forge-primary: #6366f1;
+    --forge-primary-hover: #4f46e5;
+    --forge-success: #10b981;
+    --forge-danger: #f43f5e;
+    --forge-bg-card: rgba(255, 255, 255, 0.7);
+    --forge-border: rgba(226, 232, 240, 0.8);
+    --forge-text-main: #1e293b;
+    --forge-text-sub: #64748b;
+    --forge-radius: 12px;
+    --forge-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+}
+
+/* Captcha Layout */
+.forge-shield-wrapper {
+    margin: 1.5rem 0;
+    width: 100%;
+}
+
+.forge-captcha-group {
+    background: rgba(248, 250, 252, 0.85);
+    border: 1px solid var(--forge-border);
+    border-radius: var(--forge-radius);
+    padding: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.01);
+}
+
+.forge-captcha-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    color: var(--forge-text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.forge-captcha-question {
+    background: var(--forge-primary);
+    color: #ffffff;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.25);
+}
+
+.forge-captcha-input {
+    width: 100px;
+    padding: 0.5rem;
+    border: 1px dashed var(--forge-border);
+    background: #ffffff;
+    border-radius: 6px;
+    font-size: 1rem;
+    text-align: center;
+    font-family: inherit;
+    font-weight: 600;
+    color: var(--forge-primary);
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.forge-captcha-input:focus {
+    border-color: var(--forge-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Spinner Animation */
+.forge-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    vertical-align: text-bottom;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: forge-spin .75s linear infinite;
+    margin-right: 0.6rem;
+}
+
+@keyframes forge-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Toast Container & Notification Toast */
+.forge-toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 420px;
+    width: calc(100% - 48px);
+}
+
+.forge-toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border-left: 5px solid var(--forge-primary);
+    border-radius: 10px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    color: #1e293b;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transform: translateX(120%);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.forge-toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.forge-toast-success {
+    border-left-color: var(--forge-success);
+}
+
+.forge-toast-danger {
+    border-left-color: var(--forge-danger);
+}
+
+.forge-toast-icon {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.forge-toast-success .forge-toast-icon {
+    color: var(--forge-success);
+}
+
+.forge-toast-danger .forge-toast-icon {
+    color: var(--forge-danger);
+}
+
+.forge-toast-message {
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/* Animations */
+.animate-fade-in {
+    animation: forgeFadeIn 0.3s ease-out forwards;
+}
+
+@keyframes forgeFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Premium form framework style classes */
+form.forge-form {
+    background: #ffffff;
+    padding: 2.5rem;
+    border-radius: var(--forge-radius);
+    border: 1px solid var(--forge-border);
+    box-shadow: var(--forge-shadow);
+    max-width: 550px;
+    margin: 0 auto;
+    font-family: 'Outfit', sans-serif;
+}
+
+form.forge-form .forge-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+form.forge-form label {
+    font-size: 0.9rem;
+    color: var(--forge-text-sub);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+form.forge-form input[type="text"],
+form.forge-form input[type="email"],
+form.forge-form input[type="number"],
+form.forge-form textarea {
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--forge-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--forge-text-main);
+    background: #f8fafc;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    outline: none;
+}
+
+form.forge-form input:focus,
+form.forge-form textarea:focus {
+    border-color: var(--forge-primary);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+}
+
+form.forge-form button[type="submit"],
+form.forge-form input[type="submit"] {
+    background: linear-gradient(135deg, var(--forge-primary) 0%, var(--forge-primary-hover) 100%);
+    color: #ffffff;
+    padding: 0.95rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.15), 0 2px 4px -1px rgba(99, 102, 241, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+form.forge-form button[type="submit"]:hover:not(:disabled),
+form.forge-form input[type="submit"]:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.2), 0 4px 6px -2px rgba(99, 102, 241, 0.1);
+}
+
+form.forge-form button[type="submit"]:active:not(:disabled),
+form.forge-form input[type="submit"]:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+form.forge-form button[type="submit"]:disabled,
+form.forge-form input[type="submit"]:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: #cbd5e1;
+    box-shadow: none;
+}
