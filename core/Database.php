@@ -23,6 +23,10 @@ class Database {
         $app = App::getInstance();
         $config = $app->getConfig('db');
         
+        if (empty($config) || empty($config['host']) || empty($config['name'])) {
+            throw new Exception("Database configuration is missing or incomplete. Please define your 'db' settings (host, name, user, pass) in 'core/App.php'.");
+        }
+        
         $dsn = "mysql:host={$config['host']};dbname={$config['name']};charset={$config['charset']}";
         
         try {
